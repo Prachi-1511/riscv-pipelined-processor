@@ -1,0 +1,42 @@
+# Vivado generated files
+*.jou
+*.log
+*.str
+*.xpr
+*.cache/
+*.hw/
+*.ip_user_files/
+*.runs/
+*.sim/
+*.srcs/
+*.gen/
+*.vds
+*.pb
+*.wdb
+*.bit
+*.ltx
+.Xil/
+
+# Icarus Verilog
+*.vvp
+*.vcd
+a.out
+
+# ModelSim
+*.wlf
+work/
+transcript
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Simulation output dumps
+sim/*.vcd
+sim/*.log
+sim/*.out

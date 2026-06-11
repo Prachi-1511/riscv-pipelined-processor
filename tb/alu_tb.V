@@ -27,6 +27,9 @@ module alu_tb;
     endtask
 
     initial begin
+
+        $dumpfile("sim/alu.vcd");
+        $dumpvars(0, alu_tb);
         
         a = 32'd15;  b = 32'd10;  alu_op = `ALU_ADD;
         #10; check_result(32'd25, "ADD");

@@ -69,6 +69,14 @@ module regfile_tb;
         #1 we = 0; rd = 5'd5; write_data = 32'h00000000;
         #1 check(read_data1, 32'hDEADBEEF, "WE=0 no write");
 
+        // Test 5: write-before-read bypass
+        @(posedge clk);
+        #1 we = 1; rd = 5'd7; write_data = 32'hCAFEBABE;
+           rs1 = 5'd7;      // same address — bypass should activate
+        #1 check(read_data1, 32'hCAFEBABE, "write-before-read bypass");
+        @(posedge clk); 
+        #1 we = 0;
+
         // Test complete
         $display("Total: %0d PASS  %0d FAIL", pass_count, fail_count);
         $finish;

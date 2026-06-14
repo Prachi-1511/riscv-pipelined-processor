@@ -75,7 +75,7 @@ module control (
             
             `OP_B_TYPE: begin
                 branch      = 1'b1;
-                alu_SRC     = 1'b0;
+                alu_src     = 1'b0;
                 alu_op      = `ALU_SUB;
             end
 

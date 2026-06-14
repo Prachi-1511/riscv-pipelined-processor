@@ -3,12 +3,12 @@ module imem (
     output wire [31:0] instr
 );
     
-    reg [31:0] mem [0:63]; 
+    reg [31:0] mem [0:255]; 
 
     initial begin
         $readmemh("sim/program.hex", mem); // Load instructions from hex file
     end
 
-    assign instr = mem[addr[7:2]]; 
+    assign instr = mem[addr[31:2]]; 
 
 endmodule

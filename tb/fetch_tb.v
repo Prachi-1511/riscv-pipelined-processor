@@ -5,9 +5,9 @@ module fetch_tb;
     reg clk = 0, rst_n = 0;
     wire [31:0] pc_out, instr, pc_next;
 
-    assign pc_next = pc_out + 32'd4;
-
-    pc pc0 ( .clk(clk), .rst_n(rst_n), .pc_next(pc_next), .pc_out(pc_out) );
+    pc pc0 ( .clk(clk), .rst_n(rst_n), .stall(1'b0), .branch_taken(1'b0),
+               .branch_target(32'b0), .pc_out(pc_out) );
+    
     imem im0  ( .addr(pc_out), .instr(instr) );
 
     always #5 clk = ~clk;

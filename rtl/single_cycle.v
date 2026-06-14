@@ -22,7 +22,11 @@ module single_cycle (
     // PC + 4
     assign pc_plus4 = pc_out + 32'd4;
     assign branch_target = pc_out + imm; 
-    assign pc_src = (branch & zero) | jump;
+    
+    wire branch_cond = (funct3 == F3_BEQ) ?  zero           // BEQ: taken when equal
+                       : (funct3 == F3_BNE) ? ~zero : 1'b0; // BNE: taken when not equal
+
+    assign pc_src = (branch & branch_cond) | jump;
 
     pc pc0 (.clk(clk), 
             .rst_n(rst_n), 
@@ -71,6 +75,7 @@ module single_cycle (
                 .write_data(read_data2), 
                 .read_data(mem_read_data) );
 
-    assign wb_data = mem_to_reg ? mem_read_data : alu_result;
+    assign wb_data = jump ? pc_plus4 :
+                     mem_to_reg ? mem_read_data : alu_result;
 
 endmodule

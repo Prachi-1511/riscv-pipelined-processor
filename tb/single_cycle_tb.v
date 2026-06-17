@@ -14,6 +14,29 @@ module single_cycle_tb;
     wire [31:0] x12  = dut.rf0.regfile[12];
     wire [31:0] instr = dut.instr;
 
+    wire [31:0] rf [0:31];
+    genvar gi;
+    generate
+        for (gi = 0; gi < 32; gi = gi + 1) begin : reg_probe
+            assign rf[gi] = dut.rf0.regfile[gi];
+        end
+    endgenerate
+    
+    task check32;
+        input [31:0] actual, expected;
+        input [127:0] name;
+        begin
+            if (actual === expected) begin
+                $display("  PASS | %s = %0d", name, actual);
+                pass_count = pass_count + 1;
+            end 
+            else begin
+                $display("  FAIL | %s: expected %0d got %0d", name, expected, actual);
+                fail_count = fail_count + 1;
+            end
+        end
+    endtask
+
     initial begin
         
         $dumpfile("sim/single_cycle.vcd");

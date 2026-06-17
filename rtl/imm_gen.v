@@ -6,7 +6,6 @@ module imm_gen (
 );
 
     always @(*) begin
-        
         case (instr[6:0])
             `OP_I_ALU, `OP_I_LOAD, `OP_JALR:
                  // I-type: bits [31:20], sign-extended

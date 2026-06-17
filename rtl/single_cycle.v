@@ -14,18 +14,20 @@ module single_cycle (
     wire reg_write, mem_write, mem_read, alu_src;
     wire mem_to_reg, branch, jump;
     wire [3:0] alu_op;
+    wire zero;
 
     // Branch/jump target 
     wire [31:0] branch_target;
     wire pc_src;
+    wire [2:0]  funct3 = instr[14:12];
 
     // PC + 4
     assign pc_plus4 = pc_out + 32'd4;
     assign branch_target = pc_out + imm; 
     
-    wire branch_cond = (funct3 == F3_BEQ) ?  zero           // BEQ: taken when equal
-                       : (funct3 == F3_BNE) ? ~zero : 1'b0; // BNE: taken when not equal
-
+    wire branch_cond = (funct3 == `F3_BEQ) ?  zero           // BEQ: taken when equal
+                       : (funct3 == `F3_BNE) ? ~zero : 1'b0; // BNE: taken when not equal
+    
     assign pc_src = (branch & branch_cond) | jump;
 
     pc pc0 (.clk(clk), 

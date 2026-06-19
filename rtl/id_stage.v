@@ -51,7 +51,7 @@ module id_stage (
     control ctrl0 (
         .opcode    (instr[6:0]),
         .funct3    (instr[14:12]),
-        .funct7  (instr[30]),
+        .funct7    (instr[30]),
         .reg_write (reg_write),
         .alu_src   (alu_src),
         .mem_read  (mem_read),

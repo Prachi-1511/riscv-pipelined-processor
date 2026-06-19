@@ -18,6 +18,8 @@ module ifid_tb;
         $dumpvars(0, ifid_tb);
 
         clk = 0; rst_n = 0;
+        #1 $display("PC=%h | IF_instr=%h | ID_instr=%h | alu_op=%b | reg_write=%b",
+                    pc, instr, ifid_i, alu_op, rw);
 
         #12 rst_n = 1;
 

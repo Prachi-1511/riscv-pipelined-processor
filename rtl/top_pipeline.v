@@ -29,9 +29,9 @@ module top_pipeline (input wire clk, rst_n);
     wire        id_flush    = 1'b0;
 
     // WB feedback into ID 
-    wire        wb_reg_write = 1'b0;
-    wire [4:0]  wb_rd        = 5'b0;
-    wire [31:0] wb_data      = 32'b0;
+    wire        wb_reg_write = memwb_reg_write;
+    wire [4:0]  wb_rd        = memwb_rd;
+    wire [31:0] wb_data      = final_wb_data;
 
     // IF Stage 
     if_stage if0 (
@@ -131,11 +131,85 @@ module top_pipeline (input wire clk, rst_n);
         .alu_src        (idex_alu_src),
         .forward_a      (2'b00),          
         .forward_b      (2'b00),          
-        .exmem_alu_result(32'b0),         
-        .wb_data        (32'b0),          
+        .exmem_alu_result(exmem_alu_result),         
+        .wb_data        (final_wb_data),          
         .alu_result     (ex_alu_result),
         .rs2_data_out   (ex_rs2_data),
         .zero           (ex_zero),
         .branch_target  (ex_branch_target)
     );
+
+    // EX/MEM Register
+    wire [31:0] exmem_alu_result, exmem_rs2_data;
+    wire [4:0]  exmem_rd;
+    wire        exmem_zero, exmem_mem_read, exmem_mem_write;
+    wire        exmem_mem_to_reg, exmem_reg_write, exmem_branch, exmem_jump;
+
+    exmem_reg exmem0 (
+        .clk           (clk), 
+        .rst_n         (rst_n),
+        .alu_result_in (ex_alu_result),
+        .rs2_data_in   (ex_rs2_data),
+        .rd_in         (idex_rd),
+        .zero_in       (ex_zero),
+        .mem_read_in   (idex_mem_read),
+        .mem_write_in  (idex_mem_write),
+        .mem_to_reg_in (idex_mem_to_reg),
+        .reg_write_in  (idex_reg_write),
+        .branch_in     (idex_branch),
+        .jump_in       (idex_jump),
+        .alu_result_out(exmem_alu_result),
+        .rs2_data_out  (exmem_rs2_data),
+        .rd_out        (exmem_rd),
+        .zero_out      (exmem_zero),
+        .mem_read_out  (exmem_mem_read),
+        .mem_write_out (exmem_mem_write),
+        .mem_to_reg_out(exmem_mem_to_reg),
+        .reg_write_out (exmem_reg_write),
+        .branch_out    (exmem_branch),
+        .jump_out      (exmem_jump)
+    );
+
+    // MEM Stage 
+    wire [31:0] mem_read_data;
+
+    mem_stage mem0 (
+        .clk          (clk),
+        .alu_result   (exmem_alu_result),
+        .rs2_data     (exmem_rs2_data),
+        .mem_read     (exmem_mem_read),
+        .mem_write    (exmem_mem_write),
+        .mem_read_data(mem_read_data)
+    );
+
+    // MEM/WB Register
+    wire [31:0] memwb_alu_result, memwb_mem_data;
+    wire [4:0]  memwb_rd;
+    wire        memwb_mem_to_reg, memwb_reg_write;
+
+    memwb_reg memwb0 (
+        .clk           (clk), 
+        .rst_n         (rst_n),
+        .alu_result_in (exmem_alu_result),
+        .mem_data_in   (mem_read_data),
+        .rd_in         (exmem_rd),
+        .mem_to_reg_in (exmem_mem_to_reg),
+        .reg_write_in  (exmem_reg_write),
+        .alu_result_out(memwb_alu_result),
+        .mem_data_out  (memwb_mem_data),
+        .rd_out        (memwb_rd),
+        .mem_to_reg_out(memwb_mem_to_reg),
+        .reg_write_out (memwb_reg_write)
+    );
+
+    // WB Stage
+    wire [31:0] final_wb_data;
+
+    wb_stage wb0 (
+        .alu_result(memwb_alu_result),
+        .mem_data  (memwb_mem_data),
+        .mem_to_reg(memwb_mem_to_reg),
+        .wb_data   (final_wb_data)
+    );
+
 endmodule

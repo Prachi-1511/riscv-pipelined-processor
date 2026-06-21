@@ -24,8 +24,8 @@ module top_pipeline (input wire clk, rst_n);
     wire        idex_mem_to_reg, idex_reg_write, idex_branch, idex_jump;
 
     // Hazard / control
-    wire        stall       = 1'b0;
-    wire        if_flush    = 1'b0;
+    wire        stall       = hzd_stall;
+    wire        if_flush    = hzd_stall; // flush IF/ID when stalling
     wire        id_flush    = 1'b0;
 
     // WB feedback into ID 
@@ -121,7 +121,6 @@ module top_pipeline (input wire clk, rst_n);
     // EX stage wires
     wire [31:0] ex_alu_result, ex_rs2_data, ex_branch_target;
     wire        ex_zero;
-
     ex_stage ex0 (
         .rs1_data       (idex_rs1_data),
         .rs2_data       (idex_rs2_data),
@@ -144,7 +143,6 @@ module top_pipeline (input wire clk, rst_n);
     wire [4:0]  exmem_rd;
     wire        exmem_zero, exmem_mem_read, exmem_mem_write;
     wire        exmem_mem_to_reg, exmem_reg_write, exmem_branch, exmem_jump;
-
     exmem_reg exmem0 (
         .clk           (clk), 
         .rst_n         (rst_n),
@@ -172,7 +170,6 @@ module top_pipeline (input wire clk, rst_n);
 
     // MEM Stage 
     wire [31:0] mem_read_data;
-
     mem_stage mem0 (
         .clk          (clk),
         .alu_result   (exmem_alu_result),
@@ -186,7 +183,6 @@ module top_pipeline (input wire clk, rst_n);
     wire [31:0] memwb_alu_result, memwb_mem_data;
     wire [4:0]  memwb_rd;
     wire        memwb_mem_to_reg, memwb_reg_write;
-
     memwb_reg memwb0 (
         .clk           (clk), 
         .rst_n         (rst_n),
@@ -204,12 +200,23 @@ module top_pipeline (input wire clk, rst_n);
 
     // WB Stage
     wire [31:0] final_wb_data;
-
     wb_stage wb0 (
         .alu_result(memwb_alu_result),
         .mem_data  (memwb_mem_data),
         .mem_to_reg(memwb_mem_to_reg),
         .wb_data   (final_wb_data)
+    );
+
+    // Hazard unit
+    wire hzd_stall;
+    hazard_unit hzd0 (
+        .idex_mem_read(idex_mem_read),
+        .idex_rd      (idex_rd),
+        .ifid_rs1     (ifid_instr[19:15]), // rs1
+        .ifid_rs2     (ifid_instr[24:20]), // rs2
+        .stall        (hzd_stall),
+        .pc_write_disable(),
+        .ifid_write_disable()
     );
 
 endmodule

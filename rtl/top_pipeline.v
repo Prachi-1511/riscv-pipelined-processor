@@ -122,20 +122,20 @@ module top_pipeline (input wire clk, rst_n);
     wire [31:0] ex_alu_result, ex_rs2_data, ex_branch_target;
     wire        ex_zero;
     ex_stage ex0 (
-        .rs1_data       (idex_rs1_data),
-        .rs2_data       (idex_rs2_data),
-        .imm            (idex_imm),
-        .pc             (idex_pc),
-        .alu_op         (idex_alu_op),
-        .alu_src        (idex_alu_src),
-        .forward_a      (2'b00),          
-        .forward_b      (2'b00),          
+        .rs1_data        (idex_rs1_data),
+        .rs2_data        (idex_rs2_data),
+        .imm             (idex_imm),
+        .pc              (idex_pc),
+        .alu_op          (idex_alu_op),
+        .alu_src         (idex_alu_src),
+        .forward_a       (fwd_a),          
+        .forward_b       (fwd_b),          
         .exmem_alu_result(exmem_alu_result),         
-        .wb_data        (final_wb_data),          
-        .alu_result     (ex_alu_result),
-        .rs2_data_out   (ex_rs2_data),
-        .zero           (ex_zero),
-        .branch_target  (ex_branch_target)
+        .wb_data         (final_wb_data),          
+        .alu_result      (ex_alu_result),
+        .rs2_data_out    (ex_rs2_data),
+        .zero            (ex_zero),
+        .branch_target   (ex_branch_target)
     );
 
     // EX/MEM Register
@@ -217,6 +217,19 @@ module top_pipeline (input wire clk, rst_n);
         .stall        (hzd_stall),
         .pc_write_disable(),
         .ifid_write_disable()
+    );
+
+    // Forwarding unit
+    wire [1:0] fwd_a, fwd_b;
+    forwarding_unit fwd0 (
+        .idex_rs1       (idex_rs1_addr),
+        .idex_rs2       (idex_rs2_addr),
+        .exmem_rd       (exmem_rd),
+        .exmem_reg_write(exmem_reg_write),
+        .memwb_rd       (memwb_rd),
+        .memwb_reg_write(memwb_reg_write),
+        .forward_a      (fwd_a),
+        .forward_b      (fwd_b)
     );
 
 endmodule

@@ -6,7 +6,7 @@ module imem (
     reg [31:0] mem [0:255]; 
 
     initial begin
-        $readmemh("sim/program_hazard.hex", mem); // Load instructions from hex file
+        $readmemh("sim/program_full.hex", mem); // Load instructions from hex file
     end
 
     assign instr = mem[addr[31:2]]; 

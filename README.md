@@ -54,7 +54,7 @@ architecture for frontend semiconductor roles.
 | 11 | MEM and WB Stages | `mem_stage.v`, `wb_stage.v` | ✅ Complete |
 | 12 | Hazard Detection Unit | `hazard_unit.v` | ✅ Complete |
 | 13 | Data Forwarding Unit | `forwarding_unit.v` | ✅ Complete |
-| 14 | Full Pipeline Integration | `top_pipeline.v` | 🔄 In Progress |
+| 14 | Full Pipeline Integration | `top_pipeline.v` | ✅ In Progress |
 | 15 | Branch Hazards & Flush | — | ⏳ Pending |
 | 16 | Static Branch Prediction | — | ⏳ Pending |
 | 17 | 2-Bit Dynamic Predictor | — | ⏳ Pending |
@@ -108,7 +108,7 @@ riscv-pipelined-processor/
 │   ├── top_single_cycle_tb.v
 │   └── pipeline_full_tb.v
 ├── sim/                    # Simulation scripts and hex programs
-│   ├── program.hex         # Basic 3-instruction test (ADDI, ADDI, ADD)
+│   ├── program_full.hex    # Exercise every instruction type built
 │   ├── program_hazard.hex  # Back-to-back RAW hazard test (no NOPs)
 │   ├── program_nops.hex    # Same program with NOPs (pre-forwarding baseline)
 │   └── run_all.sh          # Compile and run all testbenches
@@ -141,12 +141,12 @@ vvp sc_sim
 
 ### Run the pipelined processor (Days 8-13)
 ```bash
-iverilog -o pipe_sim rtl/riscv_defs.vh rtl/pc.v rtl/imem.v rtl/regfile.v \
+iverilog -o pipeline_sim rtl/riscv_defs.vh rtl/pc.v rtl/imem.v rtl/regfile.v \
          rtl/alu.v rtl/control.v rtl/imm_gen.v rtl/dmem.v \
          rtl/pipeline_regs.v rtl/if_stage.v rtl/id_stage.v rtl/ex_stage.v \
          rtl/mem_stage.v rtl/wb_stage.v rtl/hazard_unit.v \
          rtl/forwarding_unit.v rtl/top_pipeline.v tb/pipeline_full_tb.v
-vvp pipe_sim
+vvp pipeline_sim
 ```
 
 ### View waveforms

@@ -25,8 +25,8 @@ module top_pipeline (input wire clk, rst_n);
 
     // Hazard / control
     wire        stall       = hzd_stall;
-    wire        if_flush    = hzd_stall; // flush IF/ID when stalling
-    wire        id_flush    = 1'b0;
+    wire        id_flush    = hzd_stall; // flush IF/ID when stalling
+    wire        if_flush    = 1'b0;
 
     // WB feedback into ID 
     wire        wb_reg_write = memwb_reg_write;

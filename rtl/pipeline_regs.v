@@ -35,6 +35,7 @@ module idex_reg (
     input  wire [4:0]  rs1_addr_in,   // needed by forwarding unit 
     input  wire [4:0]  rs2_addr_in,   // needed by forwarding unit
     input  wire [4:0]  rd_in,
+    input wire  [2:0]  func3_in,
     // Control inputs
     input  wire [3:0]  alu_op_in,
     input  wire        alu_src_in,
@@ -52,6 +53,7 @@ module idex_reg (
     output reg  [4:0]  rs1_addr_out,
     output reg  [4:0]  rs2_addr_out,
     output reg  [4:0]  rd_out,
+    output reg  [2:0]  func3_out,
     // Control outputs
     output reg  [3:0]  alu_op_out,
     output reg         alu_src_out,
@@ -74,6 +76,7 @@ module idex_reg (
             rd_out         <= 5'b0;
             alu_op_out     <= `ALU_ADD;
             alu_src_out    <= 1'b0;
+            func3_out      <= 3'b0;
             mem_read_out   <= 1'b0;
             mem_write_out  <= 1'b0;
             mem_to_reg_out <= 1'b0;
@@ -91,6 +94,7 @@ module idex_reg (
             rd_out         <= rd_in;
             alu_op_out     <= alu_op_in;
             alu_src_out    <= alu_src_in;
+            func3_out      <= func3_in;
             mem_read_out   <= mem_read_in;
             mem_write_out  <= mem_write_in;
             mem_to_reg_out <= mem_to_reg_in;

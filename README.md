@@ -133,25 +133,25 @@ brew install icarus-verilog gtkwave     # macOS
 
 ### Run the single-cycle processor
 ```bash
-iverilog -o sc_sim rtl/riscv_defs.vh rtl/pc.v rtl/imem.v rtl/regfile.v \
+iverilog -o top_sim rtl/riscv_defs.vh rtl/pc.v rtl/imem.v rtl/regfile.v \
          rtl/alu.v rtl/control.v rtl/imm_gen.v rtl/dmem.v \
          rtl/top_single_cycle.v tb/top_single_cycle_tb.v
-vvp sc_sim
+vvp top_sim
 ```
 
-### Run the pipelined processor (Days 8-13)
+### Run the pipelined processor (Days 8-14)
 ```bash
-iverilog -o pipeline_sim rtl/riscv_defs.vh rtl/pc.v rtl/imem.v rtl/regfile.v \
+iverilog -o fullpipe_sim rtl/riscv_defs.vh rtl/pc.v rtl/imem.v rtl/regfile.v \
          rtl/alu.v rtl/control.v rtl/imm_gen.v rtl/dmem.v \
          rtl/pipeline_regs.v rtl/if_stage.v rtl/id_stage.v rtl/ex_stage.v \
          rtl/mem_stage.v rtl/wb_stage.v rtl/hazard_unit.v \
-         rtl/forwarding_unit.v rtl/top_pipeline.v tb/pipeline_full_tb.v
-vvp pipeline_sim
+         rtl/forwarding_unit.v rtl/top_pipeline.v tb/pipeline_final_tb.v
+vvp fullpipe_sim
 ```
 
 ### View waveforms
 ```bash
-gtkwave pipeline.vcd
+gtkwave sim/pipeline_final.vcd
 ```
 
 ---
@@ -196,6 +196,7 @@ without requiring a forwarding path from WB to EX.
 | `pipeline_regs_tb.v` | Stall, flush, normal advance | IF/ID register | ✅ PASS |
 | `pipeline_full_tb.v` (NOPs) | ADDI, ADDI, ADD with spacing | None | ✅ PASS |
 | `forwarding_tb.v` | Back-to-back RAW hazards | EX/MEM + MEM/WB | ✅ PASS |
+| `pipeline_final_tb.v` | Hazard stall | Full pipeline | ✅ PASS |
 
 ---
 

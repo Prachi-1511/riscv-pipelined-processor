@@ -13,6 +13,7 @@ module top_pipeline (input wire clk, rst_n);
     wire [31:0] id_rs1_data, id_rs2_data, id_imm;
     wire [4:0]  id_rs1_addr, id_rs2_addr, id_rd;
     wire [3:0]  id_alu_op;
+    wire [2:0]  id_func3;
     wire        id_alu_src, id_mem_read, id_mem_write;
     wire        id_mem_to_reg, id_reg_write, id_branch, id_jump;
 
@@ -20,18 +21,23 @@ module top_pipeline (input wire clk, rst_n);
     wire [31:0] idex_pc, idex_rs1_data, idex_rs2_data, idex_imm;
     wire [4:0]  idex_rs1_addr, idex_rs2_addr, idex_rd;
     wire [3:0]  idex_alu_op;
+    wire [2:0]  idex_func3;
     wire        idex_alu_src, idex_mem_read, idex_mem_write;
     wire        idex_mem_to_reg, idex_reg_write, idex_branch, idex_jump;
 
     // Hazard / control
     wire        stall       = hzd_stall;
-    wire        id_flush    = hzd_stall; // flush IF/ID when stalling
-    wire        if_flush    = 1'b0;
+    wire        id_flush    = hzd_stall || branch_taken; // flush IF/ID when stalling
+    wire        if_flush    = branch_taken;
 
     // WB feedback into ID 
     wire        wb_reg_write = memwb_reg_write;
     wire [4:0]  wb_rd        = memwb_rd;
     wire [31:0] wb_data      = final_wb_data;
+
+    // Branch condition
+    wire branch_cond = (idex_func3 == `F3_BEQ) ? ex_zero : (idex_func3 == `F3_BNE) ? ~ex_zero : 1'b0;
+    wire branch_taken = (idex_branch && branch_cond) || idex_jump;
 
     // IF Stage 
     if_stage if0 (
@@ -39,7 +45,7 @@ module top_pipeline (input wire clk, rst_n);
         .rst_n        (rst_n),
         .stall        (stall),
         .branch_taken (1'b0),     
-        .branch_target(32'b0),   
+        .branch_target(ex_branch_target),   
         .pc_out       (if_pc),
         .instr_out    (if_instr),
         .pc_plus4_out (if_pc_plus4)
@@ -73,6 +79,7 @@ module top_pipeline (input wire clk, rst_n);
         .rs2_addr    (id_rs2_addr),
         .rd          (id_rd),
         .alu_op      (id_alu_op),
+        .func3       (id_func3),
         .alu_src     (id_alu_src),
         .mem_read    (id_mem_read),
         .mem_write   (id_mem_write),
@@ -93,7 +100,8 @@ module top_pipeline (input wire clk, rst_n);
         .rs1_addr_in   (id_rs1_addr),   
         .rs2_addr_in   (id_rs2_addr),
         .rd_in         (id_rd),
-        .alu_op_in     (id_alu_op),     
+        .alu_op_in     (id_alu_op),
+        .func3_in      (id_func3),     
         .alu_src_in    (id_alu_src),
         .mem_read_in   (id_mem_read),   
         .mem_write_in  (id_mem_write),
@@ -108,7 +116,8 @@ module top_pipeline (input wire clk, rst_n);
         .rs1_addr_out  (idex_rs1_addr), 
         .rs2_addr_out  (idex_rs2_addr),
         .rd_out        (idex_rd),
-        .alu_op_out    (idex_alu_op),   
+        .alu_op_out    (idex_alu_op), 
+        .func3_out     (idex_func3),  
         .alu_src_out   (idex_alu_src),
         .mem_read_out  (idex_mem_read), 
         .mem_write_out (idex_mem_write),

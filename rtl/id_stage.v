@@ -11,6 +11,7 @@ module id_stage (
     input  wire [4:0]  wb_rd,
     input  wire [31:0] wb_data,
     // Decoded outputs — go into ID/EX register
+    output wire [2:0]  func3,
     output wire [31:0] rs1_data,
     output wire [31:0] rs2_data,
     output wire [31:0] imm,
@@ -31,6 +32,7 @@ module id_stage (
     assign rs1_addr = instr[19:15];
     assign rs2_addr = instr[24:20];
     assign rd       = instr[11:7];
+    assign func3    = instr[14:12];
     
     // Register file — write-back feeds back into the same cycle
     regfile rf0 (

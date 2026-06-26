@@ -106,7 +106,8 @@ module pipeline_final_tb;
         $display("  Forward A events      : %0d", fwd_a_count);
         $display("  Forward B events      : %0d", fwd_b_count);
         $display("  CPI                   : %0d.%02d",
-                 cycle_count/20, (cycle_count*100/20)%100);
+                 1 + (stall_count / 20) //instruction count: 20
+                , (stall_count * 100 / 20) % 100 );
 
         // Final summary
         $display("========================================");

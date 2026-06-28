@@ -1,8 +1,6 @@
 `include "rtl/riscv_defs.vh"
 
 module top_pipeline (input wire clk, rst_n);
-    // Stage wires 
-    
     // IF outputs
     wire [31:0] if_pc, if_instr, if_pc_plus4;
 
@@ -25,6 +23,27 @@ module top_pipeline (input wire clk, rst_n);
     wire        idex_alu_src, idex_mem_read, idex_mem_write;
     wire        idex_mem_to_reg, idex_reg_write, idex_branch, idex_jump;
 
+    // EX stage wires
+    wire [31:0] ex_alu_result, ex_rs2_data, ex_branch_target;
+    wire        ex_zero;
+
+    // EX/MEM Register
+    wire [31:0] exmem_alu_result, exmem_rs2_data;
+    wire [4:0]  exmem_rd;
+    wire        exmem_zero, exmem_mem_read, exmem_mem_write;
+    wire        exmem_mem_to_reg, exmem_reg_write, exmem_branch, exmem_jump;
+
+    // MEM Stage 
+    wire [31:0] mem_read_data;
+
+    // MEM/WB Register
+    wire [31:0] memwb_alu_result, memwb_mem_data;
+    wire [4:0]  memwb_rd;
+    wire        memwb_mem_to_reg, memwb_reg_write;
+
+    // WB Stage
+    wire [31:0] final_wb_data;
+
     // Hazard / control
     wire        stall       = hzd_stall;
     wire        id_flush    = hzd_stall || branch_taken; // flush IF/ID when stalling
@@ -44,7 +63,7 @@ module top_pipeline (input wire clk, rst_n);
         .clk          (clk),
         .rst_n        (rst_n),
         .stall        (stall),
-        .branch_taken (1'b0),     
+        .branch_taken (branch_taken),     
         .branch_target(ex_branch_target),   
         .pc_out       (if_pc),
         .instr_out    (if_instr),
@@ -127,9 +146,6 @@ module top_pipeline (input wire clk, rst_n);
         .jump_out      (idex_jump)
     );
 
-    // EX stage wires
-    wire [31:0] ex_alu_result, ex_rs2_data, ex_branch_target;
-    wire        ex_zero;
     ex_stage ex0 (
         .rs1_data        (idex_rs1_data),
         .rs2_data        (idex_rs2_data),
@@ -147,11 +163,6 @@ module top_pipeline (input wire clk, rst_n);
         .branch_target   (ex_branch_target)
     );
 
-    // EX/MEM Register
-    wire [31:0] exmem_alu_result, exmem_rs2_data;
-    wire [4:0]  exmem_rd;
-    wire        exmem_zero, exmem_mem_read, exmem_mem_write;
-    wire        exmem_mem_to_reg, exmem_reg_write, exmem_branch, exmem_jump;
     exmem_reg exmem0 (
         .clk           (clk), 
         .rst_n         (rst_n),
@@ -177,8 +188,6 @@ module top_pipeline (input wire clk, rst_n);
         .jump_out      (exmem_jump)
     );
 
-    // MEM Stage 
-    wire [31:0] mem_read_data;
     mem_stage mem0 (
         .clk          (clk),
         .alu_result   (exmem_alu_result),
@@ -188,10 +197,6 @@ module top_pipeline (input wire clk, rst_n);
         .mem_read_data(mem_read_data)
     );
 
-    // MEM/WB Register
-    wire [31:0] memwb_alu_result, memwb_mem_data;
-    wire [4:0]  memwb_rd;
-    wire        memwb_mem_to_reg, memwb_reg_write;
     memwb_reg memwb0 (
         .clk           (clk), 
         .rst_n         (rst_n),
@@ -207,8 +212,6 @@ module top_pipeline (input wire clk, rst_n);
         .reg_write_out (memwb_reg_write)
     );
 
-    // WB Stage
-    wire [31:0] final_wb_data;
     wb_stage wb0 (
         .alu_result(memwb_alu_result),
         .mem_data  (memwb_mem_data),
@@ -239,6 +242,20 @@ module top_pipeline (input wire clk, rst_n);
         .memwb_reg_write(memwb_reg_write),
         .forward_a      (fwd_a),
         .forward_b      (fwd_b)
+    );
+
+     // Branch predictor outputs
+    wire [31:0] bp_total, bp_taken, bp_mispred, bp_penalty; 
+    branch_predictor bp0 (
+        .clk            (clk),
+        .rstn           (rst_n),
+        .branch_in_ex    (idex_branch),
+        .branch_taken    (branch_taken),
+        .predict_taken   (),
+        .total_branches  (bp_total),
+        .taken_branches  (bp_taken),
+        .mispredictions  (bp_mispred),
+        .penalty_cycles  (bp_penalty)
     );
 
 endmodule

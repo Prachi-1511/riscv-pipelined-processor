@@ -247,10 +247,11 @@ module top_pipeline (input wire clk, rst_n);
      // Branch predictor outputs
     wire [31:0] bp_total, bp_taken, bp_mispred, bp_penalty; 
     branch_predictor bp0 (
-        .clk            (clk),
-        .rstn           (rst_n),
+        .clk             (clk),
+        .rst_n           (rst_n),
         .branch_in_ex    (idex_branch),
         .branch_taken    (branch_taken),
+        .pc_in_ex        (idex_pc),
         .predict_taken   (),
         .total_branches  (bp_total),
         .taken_branches  (bp_taken),

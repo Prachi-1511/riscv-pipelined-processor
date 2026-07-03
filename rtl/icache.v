@@ -7,21 +7,21 @@ module icache (
     output reg          hit
 );
 
-    localparam SETS        = 16;
-    localparam INDEX_BITS  = 4;   // log2(16)
-    localparam OFFSET_BITS = 2;  // word-aligned, carries no info
-    localparam TAG_BITS    = 32 - INDEX_BITS - OFFSET_BITS; // 26
+    localparam sets        = 16;
+    localparam index_bits  = $clog2(sets);   
+    localparam offset_bits = $clog2(index_bits);  
+    localparam tag_bits    = 32 - index_bits - offset_bits; 
 
-    reg                  valid     [0:SETS-1];
-    reg [TAG_BITS-1:0]   tag_array [0:SETS-1];
-    reg [31:0]           data_array[0:SETS-1];
+    reg                  valid     [0:sets-1];
+    reg [tag_bits-1:0]   tag_array [0:sets-1];
+    reg [31:0]           data_array[0:sets-1];
 
-    wire [INDEX_BITS-1:0] index = addr[5:2];
-    wire [TAG_BITS-1:0]   tag   = addr[31:6];
+    wire [index_bits-1:0] index = addr[5:2];
+    wire [tag_bits-1:0]   tag   = addr[31:6];
 
     integer i;
     initial begin
-        for (i = 0; i < SETS; i = i + 1)
+        for (i = 0; i < sets; i = i + 1)
             valid[i] = 1'b0;
     end
 

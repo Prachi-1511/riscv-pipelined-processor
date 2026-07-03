@@ -18,17 +18,18 @@ module icache_tb;
 
     always #5 clk = ~clk;
 
-    task check_hit(input [31:0] a, input exp_hit, input [31:0] exp_data);
+    task check_hit(input [31:0] actual_data, input exp_hit, input [31:0] exp_data);
         begin
-            addr = a; mem_read = 1;
+            addr = actual_data; mem_read = 1;
             #1;
             if (hit === exp_hit && (!exp_hit || instr_out === exp_data)) begin
                 pass_count = pass_count + 1;
-                $display("PASS: addr=%h hit=%b data=%h", a, hit, instr_out);
-            end else begin
+                $display("PASS: addr=%h hit=%b data=%h", actual_data, hit, instr_out);
+            end 
+            else begin
                 fail_count = fail_count + 1;
                 $display("FAIL: addr=%h expected hit=%b got hit=%b data=%h",
-                          a, exp_hit, hit, instr_out);
+                          actual_data, exp_hit, hit, instr_out);
             end
         end
     endtask
@@ -47,18 +48,18 @@ module icache_tb;
         dut.fill_line(32'h00000050, 32'hDEAD0050);
         check_hit(32'h00000050, 1'b1, 32'hDEAD0050);
 
-        // Same index, different tag -> must MISS (conflict)
+        // Same index, different tag -> must MISS 
         check_hit(32'h00000150, 1'b0, 32'h0);
 
         // Fill set with new data
         dut.fill_line(32'h00000150, 32'hBEEF0150);
         check_hit(32'h00000150, 1'b1, 32'hBEEF0150);
-        check_hit(32'h00000050, 1'b0, 32'h0); // A evicted, confirms conflict
+        check_hit(32'h00000050, 1'b0, 32'h0); 
 
         // Non-conflicting address, different set
-        dut.fill_line(32'h00000090, 32'hCAFE0090); // index = 6
-        check_hit(32'h00000090, 1'b1, 32'hCAFE0090);
-        check_hit(32'h00000150, 1'b1, 32'hBEEF0150); // set 4 still intact
+        dut.fill_line(32'h00000098, 32'hCAFE0098);
+        check_hit(32'h00000098, 1'b1, 32'hCAFE0098);
+        check_hit(32'h00000150, 1'b1, 32'hBEEF0150); 
 
         $display("\n--- RESULTS: %0d PASS / %0d FAIL ---", pass_count, fail_count);
         $finish;

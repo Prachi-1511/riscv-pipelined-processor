@@ -46,19 +46,19 @@ architecture for frontend semiconductor roles.
 | 03 | Register File | `regfile.v`, `regfile_tb.v` | ✅ Complete |
 | 04 | Instruction Memory & PC | `imem.v`, `pc.v`, `fetch_tb.v` | ✅ Complete |
 | 05 | Decode & Control Unit | `control.v`, `imm_gen.v` | ✅ Complete |
-| 06 | Single-Cycle Datapath | `top_single_cycle.v`, `dmem.v` | ✅ Complete |
-| 07 | Verification & Testbench | `top_single_cycle_tb.v` | ✅ Complete |
+| 06 | Single-Cycle Datapath | `single_cycle.v`, `dmem.v` | ✅ Complete |
+| 07 | Verification & Testbench | `top_cycle_tb.v` | ✅ Complete |
 | 08 | Pipeline Registers | `pipeline_regs.v` | ✅ Complete |
 | 09 | IF and ID Stages | `if_stage.v`, `id_stage.v` | ✅ Complete |
 | 10 | EX Stage + Forwarding MUX | `ex_stage.v` | ✅ Complete |
 | 11 | MEM and WB Stages | `mem_stage.v`, `wb_stage.v` | ✅ Complete |
 | 12 | Hazard Detection Unit | `hazard_unit.v` | ✅ Complete |
 | 13 | Data Forwarding Unit | `forwarding_unit.v` | ✅ Complete |
-| 14 | Full Pipeline Integration | `top_pipeline.v` | ✅ In Progress |
-| 15 | Branch Hazards & Flush | — | ⏳ Pending |
-| 16 | Static Branch Prediction | — | ⏳ Pending |
-| 17 | 2-Bit Dynamic Predictor | — | ⏳ Pending |
-| 18 | Instruction Cache | — | ⏳ Pending |
+| 14 | Full Pipeline Integration | `top_pipeline.v` | ✅ Complete |
+| 15 | Branch Hazards & Flush | `program_branch.hex` | ✅ Complete |
+| 16 | Static Branch Prediction | `branch_predictor.v`, `branch_perf_tb.v` | ✅ Complete |
+| 17 | 2-Bit Dynamic Predictor | `bht_tb.v` | ✅ Complete |
+| 18 | Instruction Cache | `icache_tb.v` | ✅ Complete |
 | 19 | Data Cache | — | ⏳ Pending |
 | 20 | Cache Miss Handling | — | ⏳ Pending |
 | 21 | Cache Integration | — | ⏳ Pending |
@@ -95,27 +95,36 @@ riscv-pipelined-processor/
 │   ├── ex_stage.v          # Execute stage (ALU + forwarding MUXes)
 │   ├── mem_stage.v         # Memory access stage
 │   ├── wb_stage.v          # Write-back stage
-│   ├── top_single_cycle.v  # Single-cycle processor (Days 1-7 baseline)
-│   └── top_pipeline.v      # Pipelined processor top-level
+│   ├── single_cycle.v      # Single-cycle processor (Days 1-7 baseline)
+│   ├── top_pipeline.v      # Pipelined processor top-level
+│   ├── branch_predictor.v  # predicting if branch exist
+│   └── icache.v            # instruction-cache mapping
 ├── tb/                     # Testbenches (simulation only)
 │   ├── alu_tb.v
 │   ├── regfile_tb.v
 │   ├── fetch_tb.v
 │   ├── pipeline_regs_tb.v
-│   ├── if_id_tb.v
+│   ├── ifid_tb.v
 │   ├── hazard_tb.v
 │   ├── forwarding_tb.v
-│   ├── top_single_cycle_tb.v
-│   └── pipeline_full_tb.v
+│   ├── single_cycle_tb.v
+│   ├── top_cycle_tb.v
+│   ├── pipeline_full_tb.v
+│   ├── pipeline_final_tb.v
+│   ├── bht_tb.v
+│   ├── branch_perf_tb.v
+│   └── icache_tb.v
 ├── sim/                    # Simulation scripts and hex programs
 │   ├── program_full.hex    # Exercise every instruction type built
 │   ├── program_hazard.hex  # Back-to-back RAW hazard test (no NOPs)
 │   ├── program_nops.hex    # Same program with NOPs (pre-forwarding baseline)
+│   ├── program_branch.hex  # checks if branch is correctly predicted
+│   ├── program_loop.hex    # branch run and if, id flush
 │   └── run_all.sh          # Compile and run all testbenches
 ├── docs/                   # Design documentation
 │   ├── test_plan.md        # Verification test plan
 │   ├── architecture.md     # Detailed architecture notes
-│   └── waveforms/          # GTKWave screenshots
+│   └── waveforms          # GTKWave screenshots
 ├── constraints/            # Synthesis and FPGA constraints (Day 28+)
 └── README.md               # This file
 ```

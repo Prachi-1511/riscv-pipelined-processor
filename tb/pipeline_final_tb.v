@@ -6,7 +6,7 @@ module pipeline_final_tb;
 
     top_pipeline dut ( .clk(clk), .rst_n(rst_n) );
 
-    // ── Hierarchical probes — all 32 registers ────────────────────
+    // Hierarchical probes — all 32 registers
     wire [31:0] rf [0:31];
     genvar gi;
     generate

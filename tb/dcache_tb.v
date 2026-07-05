@@ -2,7 +2,8 @@
 
 module dcache_tb;
 
-    reg         clk, rst_n, mem_read, mem_write;
+    reg         clk, rst_n;
+    reg         mem_read, mem_write;
     reg  [31:0] addr, wdata;
     wire [31:0] rdata;
     wire        hit, dirty_out;

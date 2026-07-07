@@ -109,6 +109,7 @@ endmodule
 //  EX/MEM — captures execute stage outputs
 module exmem_reg (
     input  wire        clk, rst_n,
+    input wire         stall,
     input  wire [31:0] alu_result_in,
     input  wire [31:0] rs2_data_in,  // store data — passes through EX unchanged
     input  wire [4:0]  rd_in,
@@ -144,7 +145,7 @@ module exmem_reg (
             branch_out     <= 1'b0;
             jump_out       <= 1'b0;
         end 
-        else begin
+        else if (!stall) begin
             alu_result_out <= alu_result_in;
             rs2_data_out   <= rs2_data_in;
             rd_out         <= rd_in;
@@ -163,6 +164,7 @@ endmodule
 //  MEM/WB — captures memory stage outputs
 module memwb_reg (
     input  wire        clk, rst_n,
+    input              stall,
     input  wire [31:0] alu_result_in,
     input  wire [31:0] mem_data_in,
     input  wire [4:0]  rd_in,
@@ -182,7 +184,7 @@ module memwb_reg (
             mem_to_reg_out <= 1'b0;
             reg_write_out  <= 1'b0;
         end 
-        else begin
+        else if (!stall) begin
             alu_result_out <= alu_result_in;
             mem_data_out   <= mem_data_in;
             rd_out         <= rd_in;

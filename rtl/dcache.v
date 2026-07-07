@@ -5,9 +5,11 @@ module dcache (
     input  wire [31:0] wdata,
     input  wire        mem_read,
     input  wire        mem_write,
+    input wire         fill_trigger, // fill cache line on miss
+    input wire [31:0]  fill_data,    // data to fill on miss
     output reg  [31:0] rdata,
     output reg         hit,
-    output reg         dirty_out   // observability only (write-through)
+    output reg         dirty_out     // observability only (write-through)
 );
 
     localparam sets        = 16;
@@ -23,10 +25,25 @@ module dcache (
     wire [tag_bits-1:0]   tag   = addr[31:6];
 
     integer i;
-    initial begin
-        for (i = 0; i < sets; i = i + 1) begin
-            valid[i] = 1'b0;
-            dirty[i] = 1'b0;
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            for (i = 0; i < sets; i = i + 1) begin
+                valid[i] <= 1'b0;
+                dirty[i] <= 1'b0;
+            end
+        end
+        // write path: write-through, write-allocate
+        else if (mem_write) begin
+            data_array[index] <= wdata;
+            tag_array[index]  <= tag;
+            valid[index]      <= 1'b1;
+            dirty[index]      <= 1'b1;   
+        end
+        else if (fill_trigger && mem_read) begin
+            valid[index]      <= 1'b1;
+            tag_array[index]  <= tag;
+            data_array[index] <= fill_data;
+            dirty[index]      <= 1'b0;   // clean copy, just loaded from memory
         end
     end
 
@@ -42,14 +59,5 @@ module dcache (
         dirty_out = dirty[index];
     end
 
-    // Write path — sequential, write-through
-    always @(posedge clk) begin
-        if (mem_write) begin
-            data_array[index] <= wdata;
-            tag_array[index]  <= tag;
-            valid[index]      <= 1'b1;
-            dirty[index]      <= 1'b1;   
-        end
-    end
 
 endmodule

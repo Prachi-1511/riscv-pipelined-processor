@@ -44,10 +44,10 @@ module top_pipeline (input wire clk, rst_n);
     // WB Stage
     wire [31:0] final_wb_data;
 
-    // Hazard / control
-    wire        stall       = hzd_stall;
-    wire        id_flush    = hzd_stall || branch_taken; // flush IF/ID when stalling
-    wire        if_flush    = branch_taken;
+    // Cache instance outputs
+    wire        icache_hit, dcache_hit, cache_stall, fill_trigger;
+    wire [31:0] icache_instr_out, dcache_rdata;
+
 
     // WB feedback into ID 
     wire        wb_reg_write = memwb_reg_write;
@@ -57,6 +57,20 @@ module top_pipeline (input wire clk, rst_n);
     // Branch condition
     wire branch_cond = (idex_func3 == `F3_BEQ) ? ex_zero : (idex_func3 == `F3_BNE) ? ~ex_zero : 1'b0;
     wire branch_taken = (idex_branch && branch_cond) || idex_jump;
+
+    // Hazard / control
+    wire hzd_stall;
+    wire        stall       = hzd_stall | cache_stall;
+    wire        id_flush    = hzd_stall || branch_taken; // flush IF/ID when stalling
+    wire        if_flush    = branch_taken;
+    
+    // Cache control
+    wire imem_req  = 1'b1;              
+    wire dmem_req  = exmem_mem_read || exmem_mem_write;  // MEM only requests on load/store instructions
+
+    wire combined_hit   = (imem_req ? icache_hit : 1'b1) && (dmem_req ? dcache_hit : 1'b1);
+    wire combined_valid = imem_req || dmem_req;
+
 
     // IF Stage 
     if_stage if0 (
@@ -145,7 +159,8 @@ module top_pipeline (input wire clk, rst_n);
         .branch_out    (idex_branch),   
         .jump_out      (idex_jump)
     );
-
+    
+    wire [1:0] fwd_a, fwd_b;
     ex_stage ex0 (
         .rs1_data        (idex_rs1_data),
         .rs2_data        (idex_rs2_data),
@@ -166,6 +181,7 @@ module top_pipeline (input wire clk, rst_n);
     exmem_reg exmem0 (
         .clk           (clk), 
         .rst_n         (rst_n),
+        .stall         (cache_stall),
         .alu_result_in (ex_alu_result),
         .rs2_data_in   (ex_rs2_data),
         .rd_in         (idex_rd),
@@ -200,6 +216,7 @@ module top_pipeline (input wire clk, rst_n);
     memwb_reg memwb0 (
         .clk           (clk), 
         .rst_n         (rst_n),
+        .stall         (cache_stall),
         .alu_result_in (exmem_alu_result),
         .mem_data_in   (mem_read_data),
         .rd_in         (exmem_rd),
@@ -220,7 +237,6 @@ module top_pipeline (input wire clk, rst_n);
     );
 
     // Hazard unit
-    wire hzd_stall;
     hazard_unit hzd0 (
         .idex_mem_read(idex_mem_read),
         .idex_rd      (idex_rd),
@@ -232,7 +248,6 @@ module top_pipeline (input wire clk, rst_n);
     );
 
     // Forwarding unit
-    wire [1:0] fwd_a, fwd_b;
     forwarding_unit fwd0 (
         .idex_rs1       (idex_rs1_addr),
         .idex_rs2       (idex_rs2_addr),
@@ -258,5 +273,39 @@ module top_pipeline (input wire clk, rst_n);
         .mispredictions  (bp_mispred),
         .penalty_cycles  (bp_penalty)
     );
+
+    icache u_icache (
+        .clk          (clk),
+        .rst_n        (rst_n),
+        .addr         (if_pc),
+        .mem_read     (imem_req),
+        .fill_trigger (fill_trigger),
+        .fill_data    (if_instr),
+        .instr_out    (icache_instr_out),
+        .hit          (icache_hit)
+    );
+
+    dcache u_dcache (
+        .clk          (clk),
+        .rst_n        (rst_n),
+        .addr         (exmem_alu_result),
+        .wdata        (exmem_rs2_data),
+        .mem_read     (exmem_mem_read),
+        .mem_write    (exmem_mem_write),
+        .fill_trigger (fill_trigger),
+        .fill_data    (mem_read_data),
+        .rdata        (dcache_rdata),
+        .hit          (dcache_hit),
+        .dirty_out    ()
+    );
+
+    cache_ctrl #(.miss_penalty(4)) u_cache_ctrl (
+    .clk          (clk), 
+    .rst_n        (rst_n),
+    .cache_hit    (combined_hit),
+    .req_valid    (combined_valid),
+    .stall        (cache_stall),
+    .fill_trigger (fill_trigger)
+);
 
 endmodule

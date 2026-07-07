@@ -1,8 +1,10 @@
 module icache (
     input  wire        clk,
     input  wire        rst_n,
-    input  wire [31:0] addr,       // PC from fetch stage
-    input  wire        mem_read,   // fetch requesting an instruction
+    input  wire [31:0] addr,         // PC from fetch stage
+    input  wire        mem_read,     // fetch requesting an instruction
+    input wire         fill_trigger, // fill cache line on miss
+    input wire [31:0]  fill_data,    // data to fill on miss
     output reg  [31:0] instr_out,
     output reg          hit
 );
@@ -20,9 +22,17 @@ module icache (
     wire [tag_bits-1:0]   tag   = addr[31:6];
 
     integer i;
-    initial begin
-        for (i = 0; i < sets; i = i + 1)
-            valid[i] = 1'b0;
+     always @(posedge clk or negedge rst_n) begin
+        if(!rst_n) begin
+            for (i = 0; i < sets; i = i + 1) begin
+                valid[i] <= 1'b0;
+            end
+        end
+        else if (fill_trigger && mem_read) begin
+            valid[index]      <= 1'b1;
+            tag_array[index]  <= tag;
+            data_array[index] <= fill_data;
+        end
     end
 
     // Combinational hit/miss check

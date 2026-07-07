@@ -9,8 +9,8 @@ module cache_ctrl #(
     output reg  fill_trigger       // 1-cycle pulse: tells cache "fill the line now"
 );
 
-    localparam IDLE = 1'b0, MISS_WAIT = 1'b1;
-    reg state;
+    localparam IDLE = 2'b00, MISS_WAIT = 2'b01, FILL_WAIT = 2'b10;
+    reg [1:0] state;
     reg [2:0] counter;
 
     always @(posedge clk or negedge rst_n) begin
@@ -36,11 +36,14 @@ module cache_ctrl #(
                 MISS_WAIT: begin
                     if (counter == 0) begin
                         fill_trigger <= 1'b1;  // memory data "arrived" -> fill cache
-                        stall        <= 1'b0;
-                        state        <= IDLE;
-                    end else begin
-                        counter <= counter - 1;
-                    end
+                        state        <= FILL_WAIT;
+                    end 
+                    else counter <= counter - 1;
+                end
+
+                FILL_WAIT: begin
+                    state <= IDLE;
+                    stall <= 1'b0;
                 end
 
                 default: state <= IDLE;

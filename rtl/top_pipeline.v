@@ -71,6 +71,9 @@ module top_pipeline (input wire clk, rst_n);
     wire combined_hit   = (imem_req ? icache_hit : 1'b1) && (dmem_req ? dcache_hit : 1'b1);
     wire combined_valid = imem_req || dmem_req;
 
+    wire ifid_valid, idex_valid, exmem_valid, memwb_valid;
+    wire instr_retired = memwb_valid && !cache_stall;  // instruction is retired when it reaches WB stage
+
 
     // IF Stage 
     if_stage if0 (
@@ -93,7 +96,8 @@ module top_pipeline (input wire clk, rst_n);
         .pc_in    (if_pc),  
         .instr_in (if_instr),
         .pc_out   (ifid_pc), 
-        .instr_out(ifid_instr)
+        .instr_out(ifid_instr),
+        .valid_out(ifid_valid)
     );
 
     // ID Stage
@@ -126,6 +130,7 @@ module top_pipeline (input wire clk, rst_n);
         .clk           (clk), 
         .rst_n         (rst_n), 
         .flush         (id_flush),
+        .stall         (cache_stall),
         .pc_in         (ifid_pc),
         .rs1_data_in   (id_rs1_data),   
         .rs2_data_in   (id_rs2_data),
@@ -142,6 +147,7 @@ module top_pipeline (input wire clk, rst_n);
         .reg_write_in  (id_reg_write),
         .branch_in     (id_branch),     
         .jump_in       (id_jump),
+        .valid_in      (ifid_valid),
         .pc_out        (idex_pc),
         .rs1_data_out  (idex_rs1_data), 
         .rs2_data_out  (idex_rs2_data),
@@ -157,7 +163,8 @@ module top_pipeline (input wire clk, rst_n);
         .mem_to_reg_out(idex_mem_to_reg), 
         .reg_write_out (idex_reg_write),
         .branch_out    (idex_branch),   
-        .jump_out      (idex_jump)
+        .jump_out      (idex_jump),
+        .valid_out      (idex_valid)
     );
     
     wire [1:0] fwd_a, fwd_b;
@@ -192,6 +199,7 @@ module top_pipeline (input wire clk, rst_n);
         .reg_write_in  (idex_reg_write),
         .branch_in     (idex_branch),
         .jump_in       (idex_jump),
+        .valid_in       (idex_valid),
         .alu_result_out(exmem_alu_result),
         .rs2_data_out  (exmem_rs2_data),
         .rd_out        (exmem_rd),
@@ -201,7 +209,8 @@ module top_pipeline (input wire clk, rst_n);
         .mem_to_reg_out(exmem_mem_to_reg),
         .reg_write_out (exmem_reg_write),
         .branch_out    (exmem_branch),
-        .jump_out      (exmem_jump)
+        .jump_out      (exmem_jump),
+        .valid_out      (exmem_valid)
     );
 
     mem_stage mem0 (
@@ -222,11 +231,13 @@ module top_pipeline (input wire clk, rst_n);
         .rd_in         (exmem_rd),
         .mem_to_reg_in (exmem_mem_to_reg),
         .reg_write_in  (exmem_reg_write),
+        .valid_in      (exmem_valid),
         .alu_result_out(memwb_alu_result),
         .mem_data_out  (memwb_mem_data),
         .rd_out        (memwb_rd),
         .mem_to_reg_out(memwb_mem_to_reg),
-        .reg_write_out (memwb_reg_write)
+        .reg_write_out (memwb_reg_write),
+        .valid_out      (memwb_valid)
     );
 
     wb_stage wb0 (

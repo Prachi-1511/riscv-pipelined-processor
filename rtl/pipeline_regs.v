@@ -8,16 +8,19 @@ module ifid_reg (
     input  wire [31:0] pc_in,
     input  wire [31:0] instr_in,
     output reg  [31:0] pc_out,
-    output reg  [31:0] instr_out
+    output reg  [31:0] instr_out,
+    output reg        valid_out
 );
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n || flush) begin
             pc_out    <= 32'b0;
             instr_out <= 32'h0000_0013;  // NOP on reset OR bubble on branch flush
+            valid_out  <= 1'b0;          // bubble inserted on flush
         end 
         else if (!stall) begin           // only advance if not stalled
             pc_out    <= pc_in;
             instr_out <= instr_in;
+            valid_out <= 1'b1;
         end
         // if stall=1 and no flush: register holds its value (implicit)
     end
@@ -26,7 +29,7 @@ endmodule
 
 //  ID/EX  — captures decode stage outpput
 module idex_reg (
-    input  wire        clk, rst_n, flush,
+    input  wire        clk, rst_n, flush, stall,
     // Data inputs from ID stage
     input  wire [31:0] pc_in,
     input  wire [31:0] rs1_data_in,
@@ -45,6 +48,7 @@ module idex_reg (
     input  wire        reg_write_in,
     input  wire        branch_in,
     input  wire        jump_in,
+    input wire         valid_in, 
     // Data outputs
     output reg  [31:0] pc_out,
     output reg  [31:0] rs1_data_out,
@@ -62,7 +66,8 @@ module idex_reg (
     output reg         mem_to_reg_out,
     output reg         reg_write_out,
     output reg         branch_out,
-    output reg         jump_out
+    output reg         jump_out,
+    output reg         valid_out
 );
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n || flush) begin
@@ -83,8 +88,9 @@ module idex_reg (
             reg_write_out  <= 1'b0;
             branch_out     <= 1'b0;
             jump_out       <= 1'b0;
+            valid_out      <= 1'b0;
         end 
-        else begin
+        else if (!stall) begin
             pc_out         <= pc_in;
             rs1_data_out   <= rs1_data_in;
             rs2_data_out   <= rs2_data_in;
@@ -101,6 +107,7 @@ module idex_reg (
             reg_write_out  <= reg_write_in;
             branch_out     <= branch_in;
             jump_out       <= jump_in;
+            valid_out      <= flush ? 1'b0 : valid_in;  // bubble inserted on flush
         end
     end
 endmodule
@@ -120,6 +127,7 @@ module exmem_reg (
     input  wire        reg_write_in,
     input  wire        branch_in,
     input  wire        jump_in,
+    input wire         valid_in,
     
     output reg  [31:0] alu_result_out,
     output reg  [31:0] rs2_data_out,
@@ -130,7 +138,8 @@ module exmem_reg (
     output reg         mem_to_reg_out,
     output reg         reg_write_out,
     output reg         branch_out,
-    output reg         jump_out
+    output reg         jump_out,
+    output reg         valid_out
 );
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -144,6 +153,7 @@ module exmem_reg (
             reg_write_out  <= 1'b0;
             branch_out     <= 1'b0;
             jump_out       <= 1'b0;
+            valid_out      <= 1'b0;
         end 
         else if (!stall) begin
             alu_result_out <= alu_result_in;
@@ -156,6 +166,7 @@ module exmem_reg (
             reg_write_out  <= reg_write_in;
             branch_out     <= branch_in;
             jump_out       <= jump_in;
+            valid_out      <= valid_in;
         end
     end
 endmodule
@@ -170,11 +181,14 @@ module memwb_reg (
     input  wire [4:0]  rd_in,
     input  wire        mem_to_reg_in,
     input  wire        reg_write_in,
+    input wire         valid_in,
+    
     output reg  [31:0] alu_result_out,
     output reg  [31:0] mem_data_out,
     output reg  [4:0]  rd_out,
     output reg         mem_to_reg_out,
-    output reg         reg_write_out
+    output reg         reg_write_out,
+    output reg         valid_out
 );
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -183,6 +197,7 @@ module memwb_reg (
             rd_out         <= 5'b0;
             mem_to_reg_out <= 1'b0;
             reg_write_out  <= 1'b0;
+            valid_out      <= 1'b0;
         end 
         else if (!stall) begin
             alu_result_out <= alu_result_in;
@@ -190,6 +205,7 @@ module memwb_reg (
             rd_out         <= rd_in;
             mem_to_reg_out <= mem_to_reg_in;
             reg_write_out  <= reg_write_in;
+            valid_out      <= valid_in;
         end
     end
 endmodule

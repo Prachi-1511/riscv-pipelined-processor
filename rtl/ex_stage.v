@@ -1,4 +1,4 @@
-`include "rtl/riscv_defs.vh"
+`include "riscv_defs.vh"
 
 module ex_stage (
     // Data inputs from ID/EX register

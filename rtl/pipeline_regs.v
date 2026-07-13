@@ -1,4 +1,4 @@
-`include "rtl/riscv_defs.vh"
+`include "riscv_defs.vh"
 
 //  IF/ID  — captures fetch stage outputs
 module ifid_reg (

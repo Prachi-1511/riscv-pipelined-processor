@@ -1,4 +1,4 @@
-`include "rtl/riscv_defs.vh"
+`include "riscv_defs.vh"
 
 module id_stage (
     input  wire        clk,

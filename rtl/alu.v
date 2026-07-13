@@ -1,4 +1,4 @@
-`include "rtl/riscv_defs.vh"
+`include "riscv_defs.vh"
 
 module alu (
     input  wire [31:0] a, b,

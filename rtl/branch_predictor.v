@@ -1,4 +1,4 @@
-`include "rtl/riscv_defs.vh"
+`include "riscv_defs.vh"
 
 module branch_predictor (
     input wire clk, rst_n,

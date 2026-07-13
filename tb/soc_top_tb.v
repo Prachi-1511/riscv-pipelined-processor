@@ -16,6 +16,17 @@ module soc_top_tb;
         .cache_stall(dut.u_cpu.cache_stall),
         .branch_taken(dut.u_cpu.branch_taken)
     );
+
+    coverage_model u_cov (
+        .clk(clk), .rst_n(rst_n),
+        .hzd_stall(dut.u_cpu.hzd_stall),
+        .branch_taken(dut.u_cpu.branch_taken),
+        .cache_stall(dut.u_cpu.cache_stall),
+        .icache_hit(dut.u_cpu.icache_hit),
+        .dcache_hit(dut.u_cpu.dcache_hit),
+        .fwd_a(dut.u_cpu.fwd_a),
+        .fwd_b(dut.u_cpu.fwd_b)
+    );
     
     integer pass_count = 0, fail_count = 0;
     task check(input cond, input [8*64:1] msg);
@@ -26,6 +37,9 @@ module soc_top_tb;
     endtask
 
     initial begin
+        $dumpfile("sim/soc_top.vcd");
+        $dumpvars(0, soc_top_tb);
+        
         clk=0; rst_n=0;
         #12 rst_n = 1;
 
@@ -40,6 +54,8 @@ module soc_top_tb;
         check(!$isunknown(dut.u_axi_master.state), "AXI master FSM state is defined, no X propagation");
 
         $display("\n--- RESULTS: %0d PASS / %0d FAIL ---", pass_count, fail_count);
+
+        u_cov.report_coverage();
         $finish;
     end
 

@@ -1,4 +1,4 @@
-`include "rtl/riscv_defS.vh"
+`include "riscv_defs.vh"
 
 module control (
     input  wire [6:0] opcode,

@@ -1,4 +1,4 @@
-`include "rtl/riscv_defS.vh"
+`include "riscv_defs.vh"
 
 module imm_gen (
     input  wire [31:0] instr,

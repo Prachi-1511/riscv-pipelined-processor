@@ -1,4 +1,4 @@
-`include "rtl/riscv_defs.vh"
+`include "riscv_defs.vh"
 
 module top_pipeline (input wire clk, rst_n);
     // IF outputs

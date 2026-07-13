@@ -1,4 +1,4 @@
-`include "rtl/axi_lite_if.vh"
+`include "axi_lite_if.vh"
 
 module axi_lite_slave (
     input  wire        clk,
